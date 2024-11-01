@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     WORD_DAY: str = "island"
     JOIN_TG_CHANNEL: bool = True
-    ADD_EMOJI: bool = False
+    ADD_EMOJI: bool = True
 
     SLEEP_TIME: list[int] = [32000, 60000]
     USE_PROXY: bool = False
