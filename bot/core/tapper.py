@@ -401,6 +401,15 @@ class Tapper:
             if self.tg_client.is_connected:
                 await self.tg_client.stop()
 
+    async def daily_hunts(self, http_client: aiohttp.ClientSession):
+        word = settings.WORD_DAY
+        response = await http_client.post(
+            f'https://backend.tonoldy.com/api/challenge/daily_hunt?dailyHuntWord={word}'
+        )
+        resp_text = await response.text()
+
+        return {'is_empty_response': resp_text == '', 'response_text': resp_text}
+
     async def run(self) -> None:
         if settings.USE_RANDOM_DELAY_IN_RUN:
             random_delay = random.randint(settings.RANDOM_DELAY_IN_RUN[0], settings.RANDOM_DELAY_IN_RUN[1])
@@ -443,6 +452,20 @@ class Tapper:
 
                 mint_status, mint_supply = await self.get_nft_mint_pass_status(http_client)
                 logger.info(f"{self.session_name} | NFT Mint Status: <ly>{mint_status}</ly> | Supply: <ly>{mint_supply}</ly>")
+
+                # Получаем информацию о daily hunt
+                challenge = await self.get_challenge(http_client)
+                if challenge.get("dailyHuntIsCompleted", False):
+                    logger.info(f"{self.session_name} | Daily hunt already completed.")
+                else:
+                    await self.daily_hunts(http_client)
+                    await asyncio.sleep(random.randint(5, 15))
+
+                    response = await self.get_challenge(http_client)
+                    logger.info(
+                        f"{self.session_name} | Sent word <ly>'{response.get('dailyHuntWordCompleted')}'</ly> "
+                        f"for daily hunt. Reward: <ly>{response.get('dailyHuntCurrentReward')}</ly>"
+                    )
 
                 await self.setup_telegram_account()
 
